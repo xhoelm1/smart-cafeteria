@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{% if item %}Edit{% else %}New{% endif %} item &middot; Admin{% endblock %}
+{% block content %}
+<h1>{% if item %}Edit {{ item.name }}{% else %}Add menu item{% endif %}</h1>
+<form method="post" class="form-stack">
+  {{ form.hidden_tag() }}
+  <label>{{ form.name.label }} {{ form.name(class_="input") }}
+    {% for e in form.name.errors %}<small class="error">{{ e }}</small>{% endfor %}
+  </label>
+  <label>{{ form.description.label }} {{ form.description(class_="input", rows=3) }}
+    {% for e in form.description.errors %}<small class="error">{{ e }}</small>{% endfor %}
+  </label>
+  <div class="grid-2">
+    <label>{{ form.price.label }} {{ form.price(class_="input") }}
+      {% for e in form.price.errors %}<small class="error">{{ e }}</small>{% endfor %}
+    </label>
+    <label>{{ form.stock.label }} {{ form.stock(class_="input") }}
+      {% for e in form.stock.errors %}<small class="error">{{ e }}</small>{% endfor %}
+    </label>
+    <label>{{ form.category.label }} {{ form.category(class_="input") }}</label>
+    <label class="checkbox-row">{{ form.is_available() }} {{ form.is_available.label }}</label>
+  </div>
+  <label>{{ form.image_url.label }} {{ form.image_url(class_="input") }}</label>
+  <div class="actions">
+    {{ form.submit(class_="btn btn-primary") }}
+    <a class="btn btn-ghost" href="{{ url_for('admin.menu_list') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,40 @@
+<nav class="navbar">
+  <a class="brand" href="{{ url_for('index') }}">
+    <span class="brand-mark">SC</span>
+    <span>Smart Cafeteria</span>
+  </a>
+  {% if current_user.is_authenticated %}
+    <div class="navlinks">
+      {% if current_user.role == 'student' %}
+        <a href="{{ url_for('student.menu') }}">Menu</a>
+        <a href="{{ url_for('student.cart') }}">Cart</a>
+        <a href="{{ url_for('student.my_orders') }}">My Orders</a>
+      {% elif current_user.role == 'staff' %}
+        <a href="{{ url_for('staff.dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('staff.menu_view') }}">Menu</a>
+      {% elif current_user.role == 'admin' %}
+        <a href="{{ url_for('admin.menu_list') }}">Menu</a>
+        <a href="{{ url_for('admin.users') }}">Users</a>
+        <a href="{{ url_for('admin.reports') }}">Reports</a>
+        <a href="{{ url_for('staff.dashboard') }}">Orders</a>
+      {% endif %}
+    </div>
+    <div class="navuser">
+      <a class="bell" href="{{ url_for('student.notifications') }}" id="bell" title="Notifications">
+        <span>&#128276;</span>
+        <span class="badge" id="bell-count" {% if unread_notifications == 0 %}hidden{% endif %}>{{ unread_notifications }}</span>
+      </a>
+      <span class="user-name">{{ current_user.name }}</span>
+      <span class="role-badge role-{{ current_user.role }}">{{ current_user.role }}</span>
+      <form action="{{ url_for('auth.logout') }}" method="post" class="logout-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="link-btn" type="submit">Logout</button>
+      </form>
+    </div>
+  {% else %}
+    <div class="navlinks">
+      <a href="{{ url_for('auth.login') }}">Login</a>
+      <a href="{{ url_for('auth.register') }}">Register</a>
+    </div>
+  {% endif %}
+</nav>

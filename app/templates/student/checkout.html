@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Checkout &middot; Smart Cafeteria{% endblock %}
+{% block content %}
+<h1>Checkout</h1>
+<div class="two-col">
+  <section class="card">
+    <h2>Order summary</h2>
+    <table class="data-table">
+      <thead><tr><th>Item</th><th>Qty</th><th>Line</th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.item.name }}</td>
+          <td>{{ row.quantity }}</td>
+          <td>{{ '%.2f'|format(row.line_total) }} L</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot><tr><td colspan="2"><strong>Total</strong></td><td><strong>{{ '%.2f'|format(subtotal) }} L</strong></td></tr></tfoot>
+    </table>
+  </section>
+  <section class="card">
+    <h2>Pickup time</h2>
+    <form method="post">
+      {{ form.hidden_tag() }}
+      <label for="time_slot_id">Choose a slot</label>
+      <select id="time_slot_id" name="time_slot_id" class="input" required>
+        <option value="">— Select a pickup time —</option>
+        {% for slot in slots %}
+          <option value="{{ slot.id }}" {% if slot.is_full %}disabled{% endif %}>
+            {{ slot.label }} ({{ slot.booked_count }}/{{ slot.capacity }})
+            {% if slot.is_full %} — Full{% endif %}
+          </option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-primary block" type="submit">Place order</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

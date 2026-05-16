@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Staff Dashboard &middot; Smart Cafeteria{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Staff Dashboard</h1>
+    <p class="muted">Live queue — refreshes automatically every 5 seconds.</p>
+  </div>
+</section>
+<div class="kanban">
+  {% for col_name, label in [('pending', 'New / Confirmed'), ('preparing', 'Preparing'), ('ready', 'Ready')] %}
+  <div class="kanban-col">
+    <header class="kanban-header">
+      <h2>{{ label }}</h2>
+      <span class="count">{{ columns[col_name]|length }}</span>
+    </header>
+    {% if columns[col_name] %}
+      {% for order in columns[col_name] %}
+        {% include "staff/order_card.html" %}
+      {% endfor %}
+    {% else %}
+      <p class="empty small">Nothing here yet.</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>setTimeout(() => location.reload(), 5000);</script>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Cart &middot; Smart Cafeteria{% endblock %}
+{% block content %}
+<h1>Your Cart</h1>
+{% if rows %}
+<table class="data-table">
+  <thead>
+    <tr><th>Item</th><th>Price</th><th class="qty-col">Quantity</th><th>Line total</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td>
+        <strong>{{ row.item.name }}</strong><br>
+        <small class="muted">{{ row.item.category }}</small>
+      </td>
+      <td>{{ '%.2f'|format(row.item.price) }} L</td>
+      <td>
+        <form method="post" action="{{ url_for('student.cart_update') }}" class="inline-form">
+          {{ update_form.hidden_tag() }}
+          <input type="hidden" name="item_id" value="{{ row.item.id }}">
+          <input class="input qty" type="number" name="quantity" value="{{ row.quantity }}" min="0" max="{{ row.item.stock }}">
+          <button class="btn btn-ghost" type="submit">Update</button>
+        </form>
+      </td>
+      <td><strong>{{ '%.2f'|format(row.line_total) }} L</strong></td>
+      <td>
+        <form method="post" action="{{ url_for('student.cart_update') }}" class="inline-form">
+          {{ update_form.hidden_tag() }}
+          <input type="hidden" name="item_id" value="{{ row.item.id }}">
+          <input type="hidden" name="quantity" value="0">
+          <button class="btn btn-danger-ghost" type="submit">Remove</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr><td colspan="3"><strong>Subtotal</strong></td><td colspan="2"><strong>{{ '%.2f'|format(subtotal) }} L</strong></td></tr>
+  </tfoot>
+</table>
+<div class="actions">
+  <form method="post" action="{{ url_for('student.cart_clear') }}" class="inline-form">
+    {{ clear_form.hidden_tag() }}
+    <button class="btn btn-ghost" type="submit">Clear cart</button>
+  </form>
+  <a class="btn btn-primary" href="{{ url_for('student.checkout') }}">Checkout</a>
+</div>
+{% else %}
+<p class="empty">Your cart is empty. <a href="{{ url_for('student.menu') }}">Browse the menu</a> to get started.</p>
+{% endif %}
+{% endblock %}

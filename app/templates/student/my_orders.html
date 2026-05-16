@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}My Orders &middot; Smart Cafeteria{% endblock %}
+{% block content %}
+<h1>My Orders</h1>
+{% if orders %}
+<table class="data-table">
+  <thead>
+    <tr><th>#</th><th>Placed</th><th>Pickup</th><th>Total</th><th>Status</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for o in orders %}
+    <tr>
+      <td>{{ o.id }}</td>
+      <td>{{ o.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>{{ o.time_slot.label if o.time_slot else '—' }}</td>
+      <td>{{ '%.2f'|format(o.total) }} L</td>
+      <td><span class="status status-{{ o.status }}">{{ o.status }}</span></td>
+      <td><a class="btn btn-ghost" href="{{ url_for('student.order_detail', order_id=o.id) }}">View</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No orders yet — <a href="{{ url_for('student.menu') }}">head to the menu</a> to place your first one!</p>
+{% endif %}
+{% endblock %}

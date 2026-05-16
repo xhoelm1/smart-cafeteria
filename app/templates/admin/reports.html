@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Reports &middot; Admin{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Daily Report</h1>
+    <p class="muted">Pick a date to review.</p>
+  </div>
+  <form method="get" class="inline-form">
+    <input class="input" type="date" name="date" value="{{ report_date.isoformat() }}">
+    <button class="btn btn-primary" type="submit">View</button>
+  </form>
+</section>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <span class="stat-label">Orders today</span>
+    <span class="stat-value">{{ total_orders }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Revenue (excl. cancelled)</span>
+    <span class="stat-value">{{ '%.2f'|format(revenue) }} L</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Top item</span>
+    <span class="stat-value">{{ top_items[0].name if top_items else '—' }}</span>
+  </div>
+</div>
+
+<div class="two-col">
+  <section class="card">
+    <h2>Top 5 items</h2>
+    {% if top_items %}
+    <table class="data-table">
+      <thead><tr><th>Item</th><th>Qty sold</th></tr></thead>
+      <tbody>
+        {% for row in top_items %}
+        <tr><td>{{ row.name }}</td><td>{{ row.qty }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">No sales for this date.</p>
+    {% endif %}
+  </section>
+  <section class="card">
+    <h2>Orders by status</h2>
+    {% if by_status %}
+    <table class="data-table">
+      <thead><tr><th>Status</th><th>Count</th></tr></thead>
+      <tbody>
+        {% for status, count in by_status.items() %}
+        <tr><td><span class="status status-{{ status }}">{{ status }}</span></td><td>{{ count }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">No orders for this date.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

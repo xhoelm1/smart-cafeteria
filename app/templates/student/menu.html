@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Menu &middot; Smart Cafeteria{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Today's Menu</h1>
+    <p class="muted">Pre-order, pick a time slot, skip the line.</p>
+  </div>
+  <input id="menu-search" class="input search" type="search" placeholder="Search the menu…" aria-label="Search menu">
+</section>
+{% if items %}
+<div class="card-grid" id="menu-grid">
+  {% for item in items %}
+  <article class="card menu-card" data-name="{{ item.name|lower }}">
+    <div class="card-header">
+      <h3>{{ item.name }}</h3>
+      <span class="chip chip-{{ item.stock_status }}">
+        {% if item.stock_status == 'sold_out' %}Sold Out
+        {% elif item.stock_status == 'low' %}Low Stock
+        {% else %}In Stock{% endif %}
+      </span>
+    </div>
+    <p class="muted">{{ item.description }}</p>
+    <div class="card-meta">
+      <span class="tag">{{ item.category }}</span>
+      <span class="price">{{ '%.2f'|format(item.price) }} L</span>
+    </div>
+    {% if current_user.role == 'student' %}
+      <form method="post" action="{{ url_for('student.cart_add') }}">
+        {{ add_form.hidden_tag() }}
+        <input type="hidden" name="item_id" value="{{ item.id }}">
+        <div class="qty-row">
+          <input class="input qty" type="number" name="quantity" value="1" min="1" max="{{ item.stock if item.stock > 0 else 1 }}">
+          <button class="btn btn-accent" type="submit"
+            {% if item.stock_status == 'sold_out' %}disabled{% endif %}>
+            Add to cart
+          </button>
+        </div>
+      </form>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>
+<p id="no-results" class="empty" hidden>No items match your search.</p>
+{% else %}
+<p class="empty">No menu items yet. The admin will add some soon.</p>
+{% endif %}
+{% endblock %}

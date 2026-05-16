@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Users &middot; Admin{% endblock %}
+{% block content %}
+<h1>Users</h1>
+<div class="two-col">
+  <section class="card">
+    <h2>All accounts</h2>
+    {% if users %}
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u.name }}</td>
+          <td>{{ u.email }}</td>
+          <td><span class="role-badge role-{{ u.role }}">{{ u.role }}</span></td>
+          <td>{% if u.is_active_flag %}Active{% else %}Disabled{% endif %}</td>
+          <td>
+            <form method="post" action="{{ url_for('admin.users_toggle') }}" class="inline-form">
+              {{ toggle_form.hidden_tag() }}
+              <input type="hidden" name="user_id" value="{{ u.id }}">
+              <button class="btn btn-ghost btn-sm" type="submit">
+                {% if u.is_active_flag %}Disable{% else %}Enable{% endif %}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">No users.</p>
+    {% endif %}
+  </section>
+  <section class="card">
+    <h2>Create staff or admin</h2>
+    <form method="post" class="form-stack">
+      {{ form.hidden_tag() }}
+      <label>{{ form.name.label }} {{ form.name(class_="input") }}
+        {% for e in form.name.errors %}<small class="error">{{ e }}</small>{% endfor %}
+      </label>
+      <label>{{ form.email.label }} {{ form.email(class_="input") }}
+        {% for e in form.email.errors %}<small class="error">{{ e }}</small>{% endfor %}
+      </label>
+      <label>{{ form.role.label }} {{ form.role(class_="input") }}</label>
+      <label>{{ form.password.label }} {{ form.password(class_="input") }}
+        {% for e in form.password.errors %}<small class="error">{{ e }}</small>{% endfor %}
+      </label>
+      {{ form.submit(class_="btn btn-primary") }}
+    </form>
+  </section>
+</div>
+{% endblock %}

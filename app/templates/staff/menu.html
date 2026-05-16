@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Menu Availability &middot; Smart Cafeteria{% endblock %}
+{% block content %}
+<h1>Menu Availability</h1>
+<p class="muted">Quickly toggle items off when you run out — they'll grey out on the student menu.</p>
+<table class="data-table">
+  <thead><tr><th>Item</th><th>Category</th><th>Stock</th><th>Available</th><th></th></tr></thead>
+  <tbody>
+    {% for item in items %}
+    <tr>
+      <td><strong>{{ item.name }}</strong></td>
+      <td>{{ item.category }}</td>
+      <td>{{ item.stock }}</td>
+      <td>{% if item.is_available %}Yes{% else %}No{% endif %}</td>
+      <td>
+        <form method="post" action="{{ url_for('staff.toggle_availability') }}" class="inline-form">
+          {{ form.hidden_tag() }}
+          <input type="hidden" name="item_id" value="{{ item.id }}">
+          <button class="btn btn-ghost" type="submit">Toggle</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

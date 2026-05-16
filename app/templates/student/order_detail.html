@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.id }} &middot; Smart Cafeteria{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Order #{{ order.id }}</h1>
+    <p class="muted">Placed {{ order.created_at.strftime('%Y-%m-%d %H:%M') }} &middot; Pickup: {{ order.time_slot.label }}</p>
+  </div>
+  <span class="status status-{{ order.status }}" id="order-status">{{ order.status }}</span>
+</section>
+
+<table class="data-table">
+  <thead><tr><th>Item</th><th>Qty</th><th>Unit price</th><th>Line</th></tr></thead>
+  <tbody>
+    {% for oi in order.items %}
+    <tr>
+      <td>{{ oi.menu_item.name if oi.menu_item else 'Item removed' }}</td>
+      <td>{{ oi.quantity }}</td>
+      <td>{{ '%.2f'|format(oi.unit_price) }} L</td>
+      <td>{{ '%.2f'|format(oi.line_total) }} L</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot><tr><td colspan="3"><strong>Total</strong></td><td><strong>{{ '%.2f'|format(order.total) }} L</strong></td></tr></tfoot>
+</table>
+
+{% if current_user.role == 'student' and order.user_id == current_user.id and order.can_cancel() %}
+<form method="post" action="{{ url_for('student.cancel_order', order_id=order.id) }}" class="actions">
+  {{ cancel_form.hidden_tag() }}
+  <button class="btn btn-danger" type="submit">Cancel order</button>
+</form>
+{% endif %}
+
+<a class="btn btn-ghost" href="{{ url_for('student.my_orders') }}">Back to my orders</a>
+{% endblock %}
+{% block scripts %}
+<script>
+  pollOrderStatus({{ order.id }});
+</script>
+{% endblock %}

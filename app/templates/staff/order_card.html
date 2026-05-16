@@ -1,0 +1,22 @@
+<article class="kanban-card">
+  <header>
+    <strong>#{{ order.id }}</strong>
+    <span class="status status-{{ order.status }}">{{ order.status }}</span>
+  </header>
+  <p class="muted small">{{ order.user.name }} &middot; Pickup {{ order.time_slot.label }}</p>
+  <ul class="line-items">
+    {% for oi in order.items %}
+      <li>{{ oi.quantity }}× {{ oi.menu_item.name if oi.menu_item else 'removed' }}</li>
+    {% endfor %}
+  </ul>
+  <footer class="kanban-card-footer">
+    <strong>{{ '%.2f'|format(order.total) }} L</strong>
+    {% if order.can_advance() %}
+      <form method="post" action="{{ url_for('staff.advance') }}" class="inline-form">
+        {{ form.hidden_tag() }}
+        <input type="hidden" name="order_id" value="{{ order.id }}">
+        <button class="btn btn-accent btn-sm" type="submit">→ {{ order.can_advance() }}</button>
+      </form>
+    {% endif %}
+  </footer>
+</article>

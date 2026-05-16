@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Menu Management &middot; Admin{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Menu Management</h1>
+    <p class="muted">Add, edit, or remove items. Stock auto-decrements on checkout.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('admin.menu_new') }}">+ Add item</a>
+</section>
+{% if items %}
+<table class="data-table">
+  <thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Available</th><th></th></tr></thead>
+  <tbody>
+    {% for item in items %}
+    <tr>
+      <td><strong>{{ item.name }}</strong><br><small class="muted">{{ item.description }}</small></td>
+      <td>{{ item.category }}</td>
+      <td>{{ '%.2f'|format(item.price) }} L</td>
+      <td>{{ item.stock }}</td>
+      <td>{% if item.is_available %}Yes{% else %}No{% endif %}</td>
+      <td class="row-actions">
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.menu_edit', item_id=item.id) }}">Edit</a>
+        <form method="post" action="{{ url_for('admin.menu_delete', item_id=item.id) }}" class="inline-form" onsubmit="return confirm('Delete {{ item.name }}?');">
+          {{ delete_form.hidden_tag() }}
+          <button class="btn btn-danger-ghost btn-sm" type="submit">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No menu items yet. Add the first one!</p>
+{% endif %}
+{% endblock %}
