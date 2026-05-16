@@ -197,6 +197,13 @@ label .input { margin-top: .35rem; }
 .chip-low { background: #fef3c7; color: #92400e; }
 .chip-sold_out { background: #fee2e2; color: #991b1b; }
 
+.closed-banner {
+  color: var(--error);
+  border-left: 4px solid var(--error);
+  padding-left: .75rem;
+  margin-bottom: .25rem;
+}
+
 /* Status */
 .status {
   display: inline-block; font-size: .75rem; font-weight: 700;

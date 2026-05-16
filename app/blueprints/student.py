@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
 from flask import (
@@ -6,8 +6,8 @@ from flask import (
 )
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, SubmitField, HiddenField
-from wtforms.validators import DataRequired, NumberRange
+from wtforms import IntegerField, SubmitField
+from wtforms.validators import NumberRange
 
 from app.extensions import db
 from app.models import MenuItem, TimeSlot, Order, OrderItem
@@ -18,6 +18,21 @@ bp = Blueprint("student", __name__)
 
 
 CART_KEY = "cart"
+
+CAFETERIA_CLOSE_HOUR = 18
+WEEKEND_DAYS = {5, 6}  # Saturday=5, Sunday=6
+
+
+def _next_open_pickup_date(now: datetime) -> date:
+    """Earliest date the cafeteria can take a pickup, given close hour + weekends."""
+    today = now.date()
+    if now.time() >= time(CAFETERIA_CLOSE_HOUR, 0):
+        candidate = today + timedelta(days=1)
+    else:
+        candidate = today
+    while candidate.weekday() in WEEKEND_DAYS:
+        candidate += timedelta(days=1)
+    return candidate
 
 
 def _get_cart() -> dict[str, int]:
@@ -49,19 +64,16 @@ class EmptyForm(FlaskForm):
 
 
 class AddToCartForm(FlaskForm):
-    item_id = HiddenField(validators=[DataRequired()])
     quantity = IntegerField("Quantity", default=1, validators=[NumberRange(min=1, max=20)])
     submit = SubmitField("Add to cart")
 
 
 class UpdateCartForm(FlaskForm):
-    item_id = HiddenField(validators=[DataRequired()])
     quantity = IntegerField("Quantity", validators=[NumberRange(min=0, max=20)])
     submit = SubmitField("Update")
 
 
 class CheckoutForm(FlaskForm):
-    time_slot_id = HiddenField(validators=[DataRequired()])
     submit = SubmitField("Place order")
 
 
@@ -98,7 +110,13 @@ def cart_add():
     if not form.validate_on_submit():
         flash("Invalid request.", "error")
         return redirect(url_for("student.menu"))
-    item = db.session.get(MenuItem, int(form.item_id.data))
+    raw_item = (request.form.get("item_id") or "").strip()
+    try:
+        item_id = int(raw_item)
+    except ValueError:
+        flash("Invalid request.", "error")
+        return redirect(url_for("student.menu"))
+    item = db.session.get(MenuItem, item_id)
     if item is None:
         abort(404)
     if not item.is_available or item.stock <= 0:
@@ -123,13 +141,20 @@ def cart_update():
     if not form.validate_on_submit():
         flash("Invalid request.", "error")
         return redirect(url_for("student.cart"))
-    cart = _get_cart()
-    item_id = str(form.item_id.data)
+    raw_item_id = (request.form.get("item_id") or "").strip()
+    try:
+        item_id_int = int(raw_item_id)
+    except ValueError:
+        flash("Invalid request.", "error")
+        return redirect(url_for("student.cart"))
+    item_id = str(item_id_int)
     qty = int(form.quantity.data or 0)
     if qty <= 0:
+        cart = _get_cart()
         cart.pop(item_id, None)
     else:
-        item = db.session.get(MenuItem, int(item_id))
+        cart = _get_cart()
+        item = db.session.get(MenuItem, item_id_int)
         if item is None:
             cart.pop(item_id, None)
         else:
@@ -159,28 +184,51 @@ def checkout():
         flash("Your cart is empty.", "info")
         return redirect(url_for("student.menu"))
 
-    today = date.today()
-    slots = (
-        TimeSlot.query.filter(TimeSlot.date >= today)
-        .order_by(TimeSlot.date, TimeSlot.slot_time)
-        .all()
+    now = datetime.now()
+    today = now.date()
+    close_time = time(CAFETERIA_CLOSE_HOUR, 0)
+    is_weekend_today = today.weekday() in WEEKEND_DAYS
+    target_date = _next_open_pickup_date(now)
+    is_today = target_date == today
+
+    slot_query = TimeSlot.query.filter(
+        TimeSlot.date == target_date,
+        TimeSlot.slot_time < close_time,
+    )
+    if is_today:
+        slot_query = slot_query.filter(TimeSlot.slot_time > now.time())
+    slots = slot_query.order_by(TimeSlot.slot_time).all()
+
+    template_ctx = dict(
+        rows=rows, subtotal=subtotal, slots=slots,
+        is_weekend_today=is_weekend_today,
+        target_date=target_date,
+        is_today=is_today,
+        close_hour=CAFETERIA_CLOSE_HOUR,
     )
 
     form = CheckoutForm()
     if form.validate_on_submit():
-        slot = db.session.get(TimeSlot, int(form.time_slot_id.data))
-        if slot is None or slot.date < today:
+        raw_slot = (request.form.get("time_slot_id") or "").strip()
+        try:
+            slot_id = int(raw_slot)
+        except ValueError:
+            flash("Please pick a pickup time.", "error")
+            return render_template("student/checkout.html", form=form, **template_ctx)
+
+        slot = db.session.get(TimeSlot, slot_id)
+        slot_is_valid = (
+            slot is not None
+            and slot.date == target_date
+            and slot.slot_time < close_time
+            and (not is_today or slot.slot_time > now.time())
+        )
+        if not slot_is_valid:
             flash("Please pick a valid pickup time.", "error")
-            return render_template(
-                "student/checkout.html", rows=rows, subtotal=subtotal,
-                slots=slots, form=form,
-            )
+            return render_template("student/checkout.html", form=form, **template_ctx)
         if slot.is_full:
             flash("That time slot is now full. Please pick another.", "error")
-            return render_template(
-                "student/checkout.html", rows=rows, subtotal=subtotal,
-                slots=slots, form=form,
-            )
+            return render_template("student/checkout.html", form=form, **template_ctx)
 
         for row in rows:
             item = row["item"]
@@ -213,10 +261,7 @@ def checkout():
         flash(f"Order #{order.id} placed for {slot.label}.", "success")
         return redirect(url_for("student.order_detail", order_id=order.id))
 
-    return render_template(
-        "student/checkout.html",
-        rows=rows, subtotal=subtotal, slots=slots, form=form,
-    )
+    return render_template("student/checkout.html", form=form, **template_ctx)
 
 
 @bp.route("/my-orders")

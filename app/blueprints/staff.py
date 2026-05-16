@@ -1,8 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, request
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
-from wtforms import HiddenField, SubmitField
-from wtforms.validators import DataRequired
+from wtforms import SubmitField
 
 from app.extensions import db
 from app.models import Order, MenuItem
@@ -14,13 +13,19 @@ bp = Blueprint("staff", __name__, url_prefix="/staff")
 
 
 class AdvanceForm(FlaskForm):
-    order_id = HiddenField(validators=[DataRequired()])
     submit = SubmitField("Advance")
 
 
 class ToggleAvailabilityForm(FlaskForm):
-    item_id = HiddenField(validators=[DataRequired()])
     submit = SubmitField("Toggle")
+
+
+def _read_int_form_field(name: str) -> int | None:
+    raw = (request.form.get(name) or "").strip()
+    try:
+        return int(raw)
+    except ValueError:
+        return None
 
 
 STATUS_ORDER = ["pending", "confirmed", "preparing", "ready", "completed"]
@@ -51,7 +56,10 @@ def advance():
     form = AdvanceForm()
     if not form.validate_on_submit():
         abort(400)
-    order = db.session.get(Order, int(form.order_id.data))
+    order_id = _read_int_form_field("order_id")
+    if order_id is None:
+        abort(400)
+    order = db.session.get(Order, order_id)
     if order is None:
         abort(404)
     next_status = order.can_advance()
@@ -82,7 +90,10 @@ def toggle_availability():
     form = ToggleAvailabilityForm()
     if not form.validate_on_submit():
         abort(400)
-    item = db.session.get(MenuItem, int(form.item_id.data))
+    item_id = _read_int_form_field("item_id")
+    if item_id is None:
+        abort(400)
+    item = db.session.get(MenuItem, item_id)
     if item is None:
         abort(404)
     item.is_available = not item.is_available

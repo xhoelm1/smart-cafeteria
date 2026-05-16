@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Checkout &middot; Smart Cafeteria{% endblock %}
 {% block content %}
+{% if is_weekend_today %}
+<h1 class="closed-banner">Cafeteria is Closed</h1>
+<p class="muted">We're closed on weekends. Showing next pickup times for
+  <strong>{{ target_date.strftime('%A, %B %d') }}</strong>.</p>
+{% elif not is_today %}
+<p class="muted">No more pickup times today (we close at {{ '%02d:00'|format(close_hour) }}).
+  Showing slots for <strong>{{ target_date.strftime('%A, %B %d') }}</strong>.</p>
+{% endif %}
 <h1>Checkout</h1>
 <div class="two-col">
   <section class="card">
@@ -20,20 +28,26 @@
     </table>
   </section>
   <section class="card">
-    <h2>Pickup time</h2>
+    <h2>Pickup time
+      <small class="muted">— {{ target_date.strftime('%A, %B %d') }}</small>
+    </h2>
     <form method="post">
       {{ form.hidden_tag() }}
       <label for="time_slot_id">Choose a slot</label>
-      <select id="time_slot_id" name="time_slot_id" class="input" required>
-        <option value="">— Select a pickup time —</option>
+      <select id="time_slot_id" name="time_slot_id" class="input" required {% if not slots %}disabled{% endif %}>
+        <option value="">
+          {% if slots %}— Select a pickup time —{% else %}— No pickup times available —{% endif %}
+        </option>
         {% for slot in slots %}
           <option value="{{ slot.id }}" {% if slot.is_full %}disabled{% endif %}>
-            {{ slot.label }} ({{ slot.booked_count }}/{{ slot.capacity }})
+            {{ slot.slot_time.strftime('%H:%M') }} ({{ slot.booked_count }}/{{ slot.capacity }})
             {% if slot.is_full %} — Full{% endif %}
           </option>
         {% endfor %}
       </select>
-      <button class="btn btn-primary block" type="submit">Place order</button>
+      <button class="btn btn-primary block" type="submit" {% if not slots %}disabled{% endif %}>
+        Place order
+      </button>
     </form>
   </section>
 </div>

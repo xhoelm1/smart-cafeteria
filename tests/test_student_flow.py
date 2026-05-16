@@ -1,16 +1,21 @@
-from datetime import date
+from datetime import datetime, time
 
 from app.extensions import db
 from app.models import MenuItem, TimeSlot, Order, User
+from app.blueprints.student import _next_open_pickup_date, CAFETERIA_CLOSE_HOUR
 
 
 def _first_open_slot():
-    today = date.today()
-    return (
-        TimeSlot.query.filter(TimeSlot.date >= today)
-        .order_by(TimeSlot.date, TimeSlot.slot_time)
-        .first()
+    now = datetime.now()
+    target = _next_open_pickup_date(now)
+    close = time(CAFETERIA_CLOSE_HOUR, 0)
+    q = TimeSlot.query.filter(
+        TimeSlot.date == target,
+        TimeSlot.slot_time < close,
     )
+    if target == now.date():
+        q = q.filter(TimeSlot.slot_time > now.time())
+    return q.order_by(TimeSlot.slot_time).first()
 
 
 def test_student_places_order_and_stock_decrements(app, client, login_as):

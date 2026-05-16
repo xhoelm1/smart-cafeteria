@@ -26,7 +26,7 @@
       <span class="price">{{ '%.2f'|format(item.price) }} L</span>
     </div>
     {% if current_user.role == 'student' %}
-      <form method="post" action="{{ url_for('student.cart_add') }}">
+      <form method="post" action="{{ url_for('student.cart_add') }}" class="add-to-cart-form" data-item-id="{{ item.id }}">
         {{ add_form.hidden_tag() }}
         <input type="hidden" name="item_id" value="{{ item.id }}">
         <div class="qty-row">

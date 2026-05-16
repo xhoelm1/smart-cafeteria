@@ -6,7 +6,7 @@ from flask_login import login_required
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField, TextAreaField, DecimalField, IntegerField,
-    BooleanField, SelectField, SubmitField, HiddenField, PasswordField,
+    BooleanField, SelectField, SubmitField, PasswordField,
 )
 from wtforms.validators import DataRequired, Length, NumberRange, Optional, Email, ValidationError
 
@@ -50,7 +50,6 @@ class EmptyForm(FlaskForm):
 
 
 class ToggleUserForm(FlaskForm):
-    user_id = HiddenField(validators=[DataRequired()])
     submit = SubmitField("Toggle")
 
 
@@ -154,7 +153,12 @@ def users_toggle():
     form = ToggleUserForm()
     if not form.validate_on_submit():
         abort(400)
-    user = db.session.get(User, int(form.user_id.data))
+    raw_uid = (request.form.get("user_id") or "").strip()
+    try:
+        uid = int(raw_uid)
+    except ValueError:
+        abort(400)
+    user = db.session.get(User, uid)
     if user is None:
         abort(404)
     user.is_active_flag = not user.is_active_flag

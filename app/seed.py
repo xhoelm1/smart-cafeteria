@@ -45,6 +45,8 @@ def _ensure_users() -> dict[str, User]:
     for email, name, role in DEMO_USERS:
         existing = User.query.filter_by(email=email).first()
         if existing:
+            if not existing.is_active_flag:
+                existing.is_active_flag = True
             out[email] = existing
             continue
         u = User(email=email, name=name, role=role)
@@ -80,9 +82,8 @@ def _ensure_menu() -> list[MenuItem]:
 def _ensure_time_slots() -> list[TimeSlot]:
     out = []
     today = date.today()
-    days = [today + timedelta(days=i) for i in range(3)]
-    minutes = [(h, m) for h in range(9, 14) for m in (0, 15, 30, 45)]
-    minutes.append((14, 0))
+    days = [today + timedelta(days=i) for i in range(7)]
+    minutes = [(h, m) for h in range(9, 18) for m in (0, 15, 30, 45)]
     for d in days:
         for h, m in minutes:
             t = time(h, m)
